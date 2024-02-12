@@ -16,7 +16,7 @@ app.mongodb_client = MongoClient(URI)
 app.database = app.mongodb_client['babynames']  
 
 app.include_router(gets_router)
-app.include_router()
+app.include_router(posts_router)
 
 
 
