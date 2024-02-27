@@ -21,7 +21,7 @@ def root():
 def say_hello(name: str):
     return {"message": f"Hello {name}"}
 
-@router.get("/getNames/{name}")
+@router.get("/getNames")
 def get_names(request: Request, name: str = None):
     # Send a ping to confirm a successful connection
     if not name:
