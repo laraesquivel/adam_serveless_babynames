@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Request
-import time
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from .gets import router as gets_router
 from .posts import router as posts_router
 from pymongo import MongoClient
@@ -11,6 +11,14 @@ load_dotenv()
 app = FastAPI()
 URI = os.getenv('URI')
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.mongodb_client = MongoClient(URI)
 app.database = app.mongodb_client['babynames']  
