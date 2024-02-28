@@ -18,3 +18,11 @@ class NameData(BaseModel):
 class NameInfo(BaseModel):
     found: bool
     data: Optional[NameData]
+
+class ActionRequest(BaseModel):
+    action: str
+    details: str
+
+class ActionResult(BaseModel):
+    message: str
+    id: str

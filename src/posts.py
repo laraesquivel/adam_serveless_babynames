@@ -1,39 +1,41 @@
 from fastapi import (
     APIRouter,
     Request,
+    HTTPException
 )
 
 from bson import Timestamp, json_util
 from fastapi.responses import JSONResponse
-import datetime
-
+from datetime import datetime
+from . import models
+from pymongo.collection import Collection
 
 
 router = APIRouter(tags=["posts"])
 
 
-@router.post('/postAction')
-def post_actions(request : Request) -> JSONResponse:
-    date_hour = datetime.utcnow()
-    timestamp = Timestamp(int(date_hour.timestamp()), 0)
-
+@router.post('/postAction', response_model=models.ActionResult)
+async def post_actions(request: Request, action_request: models.ActionRequest) -> JSONResponse:
     try:
-        req_body = request.json()
-        req_body['timestamp'] = timestamp
+        date_hour = datetime.utcnow()
+        timestamp = Timestamp(int(date_hour.timestamp()), 0)
+
+        # Adiciona o timestamp ao objeto Pydantic
+        action_request.timestamp = timestamp
+
+        # Convertendo o objeto Pydantic para um dicionário
+        req_body = action_request.dict()
+
+        collection_actions: Collection = request.app.database['actions']
+        result = collection_actions.insert_one(req_body)
+
+        return models.ActionResult(message='Sucesso na inserção de um novo documento', id=str(result.inserted_id))
 
     except ValueError:
-        return JSONResponse(json_util.dumps({"message" : "Invalid Req_Body"}, status_code=400))
-
-    try:
-        collection_actions = request.app.database['actions']
-
-
-        result = collection_actions.insert_one(req_body)
-        return JSONResponse(json_util.dumps({'message': 'Sucess in insert a new document','id' : str(result.inserted_id)}), status_code=201)
+        raise HTTPException(status_code=400, detail="Corpo da requisição inválido")
 
     except Exception as e:
-        return JSONResponse(f"Error in insert a new document in collection: {str(e)}", status_code=500)
-    
+        raise HTTPException(status_code=500, detail=f"Erro ao inserir um novo documento na coleção: {str(e)}")
 
 @router.post("postNewUser")
 def post_new_user(request: Request) -> JSONResponse:
