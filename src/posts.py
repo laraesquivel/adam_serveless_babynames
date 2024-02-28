@@ -7,35 +7,45 @@ from fastapi import (
 from bson import Timestamp, json_util
 from fastapi.responses import JSONResponse
 from datetime import datetime
-from . import models
+from .models import ActionRequest
 from pymongo.collection import Collection
+from pymongo import errors, MongoClient
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+URI = os.getenv('URI')
+
+mongo_client = MongoClient(URI)
+database = mongo_client['babynames']
+collection_actions = database['actions']
 
 
 router = APIRouter(tags=["posts"])
 
-
-@router.post('/postAction', response_model=models.ActionResult)
-async def post_actions(request: Request, action_request: models.ActionRequest) -> JSONResponse:
+@router.post('/postAction')
+async def post_actions(request : Request, actions : ActionRequest):
     try:
-        date_hour = datetime.utcnow()
-        timestamp = Timestamp(int(date_hour.timestamp()), 0)
-
-        # Adiciona o timestamp ao objeto Pydantic
-        action_request.timestamp = timestamp
-
-        # Convertendo o objeto Pydantic para um dicionário
-        req_body = action_request.dict()
-
-        collection_actions: Collection = request.app.database['actions']
-        result = collection_actions.insert_one(req_body)
-
-        return models.ActionResult(message='Sucesso na inserção de um novo documento', id=str(result.inserted_id))
-
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Corpo da requisição inválido")
-
+        db = request.app.database['actions']
+        item = actions.__repr__()
+        db.insert_one(item)
+        return JSONResponse({'message' : 'Ok!'}, status_code=201)
+     
+        ''' 
+           if db:
+                try:
+                    db.insert(item)
+                    return  JSONResponse({"message" : "Ok!"} , status_code=201)
+                except Exception as e:
+                    return JSONResponse({"message":"Não conseguimos inserir isso!"},status_code=500)
+            
+            #return JSONResponse({'ok':item},status_code=201)'''
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao inserir um novo documento na coleção: {str(e)}")
+        return JSONResponse({"message" : 'canoot get db'}, status_code=503)
+    
+    #return JSONResponse({"message" : "Invalid Req_Body"}, status_code=400)
+  
 
 @router.post("postNewUser")
 def post_new_user(request: Request) -> JSONResponse:
