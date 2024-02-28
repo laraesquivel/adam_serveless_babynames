@@ -32,7 +32,8 @@ def get_names(request: Request, name: str = None):
     
     if result:
         name_data = models.NameData(**result)
-        return name_data
+        name_info = models.NameInfo(found=True, data=name_data)
+        return name_info
     
     raise HTTPException(status_code=404, detail="Nome não encontrado.")
 
