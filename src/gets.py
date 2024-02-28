@@ -6,6 +6,7 @@ from fastapi import (
 from bson import json_util
 from fastapi.responses import JSONResponse
 from random import randint
+from . import models
 
 
 
@@ -21,9 +22,8 @@ def root():
 def say_hello(name: str):
     return {"message": f"Hello {name}"}
 
-@router.get("/getNames")
+@router.get("/getNames", response_model=models.NameInfo)
 def get_names(request: Request, name: str = None):
-    # Send a ping to confirm a successful connection
     if not name:
         raise HTTPException(status_code=400, detail="Por favor, forneça um nome para pesquisar na lista de nomes.")
     
@@ -31,10 +31,11 @@ def get_names(request: Request, name: str = None):
     result = babynames.find_one({'name': name})
     
     if result:
-        result_json = json_util.dumps({'found': True, 'data': result}, default=str)
-        return JSONResponse(content=result_json, status_code=200, media_type="application/json")
-
-    return JSONResponse(content=json_util.dumps({'found': False, 'message': "Name not found!"}), status_code=404, media_type="application/json")
+        name_data = models.NameData(**result)
+        name_info = models.NameInfo(found=True, data=name_data)
+        return name_info
+    
+    raise HTTPException(status_code=404, detail="Nome não encontrado.")
 
 @router.get("/getRecPhrase/{user_id}")
 def get_rec_phrase(request : Request, user_id : str = None):
