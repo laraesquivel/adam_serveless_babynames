@@ -6,9 +6,8 @@ from fastapi import (
 from bson import json_util
 from fastapi.responses import JSONResponse
 from random import randint
-from . import models
-
-
+from . import (models)
+import unicodedata
 
 router = APIRouter(tags=["gets"])
 
@@ -23,13 +22,23 @@ def say_hello(name: str):
     return {"message": f"Hello {name}"}
 
 @router.get("/getNames", response_model=models.NameInfo)
-def get_names(request: Request, name: str = None):
+def get_names(request: Request,name: str = None):
     if not name:
         raise HTTPException(status_code=400, detail="Por favor, forneça um nome para pesquisar na lista de nomes.")
-    
+    normalized_string = ''.join(c for c in unicodedata.normalize('NFD', name) if unicodedata.category(c) != 'Mn')
+
+    n = normalized_string.capitalize()
     babynames = request.app.database["names"]
-    result = babynames.find_one({'name': name})
-    
+    result = babynames.find_one({'name': n})
+
+    #babysaction = request.app.database["actions"]
+    '''
+    try:
+        item = actions.__repr__()
+        babysaction.insert_one(item)
+    except:
+        pass
+    '''
     if result:
         name_data = models.NameData(**result)
         name_info = models.NameInfo(found=True, data=name_data)
