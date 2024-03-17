@@ -7,11 +7,12 @@ from fastapi import (
 from bson import Timestamp, json_util
 from fastapi.responses import JSONResponse
 from datetime import datetime
-from .models import ActionRequest
+from .models import ActionRequest, NamesRequest, NameInfo, NameData
 from pymongo.collection import Collection
 from pymongo import errors, MongoClient
 import os
 from dotenv import load_dotenv
+
 
 load_dotenv()
 URI = os.getenv('URI')
@@ -23,8 +24,11 @@ collection_actions = database['actions']
 
 router = APIRouter(tags=["posts"])
 
+
+
+
 @router.post('/postAction')
-async def post_actions(request : Request, actions : ActionRequest):
+def post_actions(request : Request, actions : ActionRequest):
     try:
         db = request.app.database['actions']
         item = actions.__repr__()

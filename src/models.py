@@ -4,7 +4,15 @@ from bson import ObjectId
 from geojson import Point, Feature
 import datetime
 import pytz
+import re
 
+
+class NameQuery(BaseModel):
+    name : str
+
+    def __repr__(self) -> str:
+        remove_accent_and_capitalize = lambda s: re.sub(r'\p{M}', '', s.title())
+        return remove_accent_and_capitalize(self.name)
 
 
 class NameData(BaseModel):
@@ -23,6 +31,10 @@ class NameData(BaseModel):
 class NameInfo(BaseModel):
     found: bool
     data: Optional[NameData]
+
+
+class NamesRequest(BaseModel):
+    pass
 
 class ActionRequest(BaseModel):
     item : str 
