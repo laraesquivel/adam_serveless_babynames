@@ -45,6 +45,7 @@ class ActionRequest(BaseModel):
     page : int 
     location : Optional[Point]
     timestamp : Optional[float]
+    relationalItem : Optional[str]
 
     def __repr__(self) -> str:
         location = None
@@ -56,7 +57,8 @@ class ActionRequest(BaseModel):
                 "location" : location,
                 "page" : self.page,
                 "timestamp" : datetime.datetime.now(pytz.timezone("America/Bahia")).timestamp(),
-                "action" : self.action}
+                "action" : self.action,
+                "relationalItem" : self.relationalItem}
 
     
         return {'item' : self.item, 'action' : self.action,
