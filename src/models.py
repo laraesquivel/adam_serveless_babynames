@@ -26,6 +26,8 @@ class NameData(BaseModel):
     name: str = ''
     groupName: str = ''
     recommendedNames: list[str] = ''
+    origin : Optional[str] = ''
+    meaning : Optional[str] = ''
 
 
 class NameInfo(BaseModel):
