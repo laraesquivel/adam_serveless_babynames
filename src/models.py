@@ -1,10 +1,12 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+#from pydantic.functional_validators import BeforeValidator
+from typing import Optional, Annotated
 from bson import ObjectId
 from geojson import Point, Feature
 import datetime
 import pytz
 import re
+
 
 
 class NameQuery(BaseModel):
@@ -16,6 +18,7 @@ class NameQuery(BaseModel):
 
 
 class NameData(BaseModel):
+
     similiarNames: list[str] =''
     gender: str =''
     femaleCount : Optional[int] = 0
@@ -28,9 +31,12 @@ class NameData(BaseModel):
     recommendedNames: list[str] = ''
 
 
+
+
 class NameInfo(BaseModel):
     found: bool
     data: Optional[NameData]
+    id : str
 
 
 class NamesRequest(BaseModel):
@@ -46,10 +52,12 @@ class ActionRequest(BaseModel):
     location : Optional[Point]
     timestamp : Optional[float]
     relationalItem : Optional[str]
+    relationalNameID : Optional[str]
+   # idName : str
 
     def __repr__(self) -> str:
         location = None
-        if self.lat and self.lon:
+        if self.lat and self.lon and self.relationalNameID:
             location = Point((self.lat,self.lon))
     
             return {'item' : self.item, 'action' : self.action,
@@ -58,7 +66,18 @@ class ActionRequest(BaseModel):
                 "page" : self.page,
                 "timestamp" : datetime.datetime.now(pytz.timezone("America/Bahia")).timestamp(),
                 "action" : self.action,
-                "relationalItem" : self.relationalItem}
+                #"relationalItem" : self.relationalItem,
+                "relationalNameID" : ObjectId(self.relationalNameID)}
+        
+        elif self.relationalNameID:
+            return {'item' : self.item, 'action' : self.action,
+                "tokenId" : self.tokenId,
+               # "location" : location,
+                "page" : self.page,
+                "timestamp" : datetime.datetime.now(pytz.timezone("America/Bahia")).timestamp(),
+                "action" : self.action,
+               # "relationalItem" : self.relationalItem,
+                "relationalNameID" : ObjectId(self.relationalNameID)}
 
     
         return {'item' : self.item, 'action' : self.action,

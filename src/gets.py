@@ -31,6 +31,8 @@ def get_names(request: Request,name: str = None):
     babynames = request.app.database["names"]
     result = babynames.find_one({'name': n})
 
+    resul_id = str(result['_id']) if result else None
+
     #babysaction = request.app.database["actions"]
     '''
     try:
@@ -41,10 +43,16 @@ def get_names(request: Request,name: str = None):
     '''
     if result:
         name_data = models.NameData(**result)
-        name_info = models.NameInfo(found=True, data=name_data)
+        name_info = models.NameInfo(found=True, data=name_data,id=resul_id)
         return name_info
     
     raise HTTPException(status_code=404, detail="Nome não encontrado.")
+
+
+
+#Not implement yet!!!!!!!!
+
+
 
 @router.get("/getRecPhrase/{user_id}")
 def get_rec_phrase(request : Request, user_id : str = None):
