@@ -29,6 +29,8 @@ class NameData(BaseModel):
     name: str = ''
     groupName: str = ''
     recommendedNames: list[str] = ''
+    origin : str = ''
+    meaning : str = ''
 
 
 
