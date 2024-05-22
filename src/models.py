@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 #from pydantic.functional_validators import BeforeValidator
-from typing import Optional, Annotated
+from typing import Optional, Annotated, List
 from bson import ObjectId
 from geojson import Point, Feature
 import datetime
@@ -32,7 +32,20 @@ class NameData(BaseModel):
     origin : str = ''
     meaning : str = ''
 
+class SimilarNameDetails(BaseModel):
+    _id: str = Field(..., alias="_id")
+    similiarNames: List[str]
+    name: str
+    origin: str
+    meaning: str
 
+class NameDetails(BaseModel):
+    _id: str = Field(..., alias="_id")
+    similiarNames: List[str]
+    name: str
+    origin: str
+    meaning: str
+    associedDetails: Optional[List[SimilarNameDetails]] = None
 
 
 class NameInfo(BaseModel):

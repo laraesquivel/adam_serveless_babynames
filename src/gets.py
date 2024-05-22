@@ -8,6 +8,9 @@ from fastapi.responses import JSONResponse
 from random import randint
 from . import (models)
 import unicodedata
+from pydantic import parse_obj_as
+from typing import List, Optional
+
 
 router = APIRouter(tags=["gets"])
 
@@ -21,6 +24,7 @@ def root():
 def say_hello(name: str):
     return {"message": f"Hello {name}"}
 
+'''
 @router.get("/getNames", response_model=models.NameInfo)
 def get_names(request: Request,name: str = None):
     if not name:
@@ -34,23 +38,57 @@ def get_names(request: Request,name: str = None):
     resul_id = str(result['_id']) if result else None
 
     #babysaction = request.app.database["actions"]
-    '''
+    
     try:
         item = actions.__repr__()
         babysaction.insert_one(item)
     except:
         pass
-    '''
+    
     if result:
         name_data = models.NameData(**result)
         name_info = models.NameInfo(found=True, data=name_data,id=resul_id)
         return name_info
     
     raise HTTPException(status_code=404, detail="Nome não encontrado.")
+'''
 
+@router.get('/getNames')
+def get_test(request : Request, name: str=None):
+    if not name:
+        raise HTTPException(status_code=400, detail="Por favor, forneça um nome para pesquisar na lista de nomes.")
+    normalized_string = ''.join(c for c in unicodedata.normalize('NFD', name) if unicodedata.category(c) != 'Mn')
 
+    n = normalized_string.capitalize()
+    babynames = request.app.database["names"]
 
-#Not implement yet!!!!!!!!
+    pipeline = [
+    {"$match": {"name": n}},
+    {"$lookup": {
+        "from": "names",
+        "localField": "recommendedNames",
+        "foreignField": "name",
+        "as": "associedDetails"
+    }},
+    {"$project": {
+        "_id": 1,
+        "name": 1,
+        "origin" : 1,
+        "meaning" : 1,
+        "similiarNames" : 1,
+        "associedDetails":{
+            "origin": 1,
+            "meaning": 1,
+            "name" : 1,
+            "similiarNames" : 1,
+            "_id" : 1
+        }
+    }}
+]
+    results = list(babynames.aggregate(pipeline))
+
+    name_details = [models.NameDetails(**item) for item in results]
+    return JSONResponse(content=[name.dict(by_alias=True) for name in name_details])
 
 
 
