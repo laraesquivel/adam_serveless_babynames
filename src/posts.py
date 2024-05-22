@@ -31,10 +31,19 @@ router = APIRouter(tags=["posts"])
 def post_actions(request : Request, actions : ActionRequest):
     try:
         db = request.app.database['actions']
+        nameDB = request.app.database['names']
         item = actions.__repr__()
+        documento = nameDB.find_one({'name': item['item']})
+
+        if documento:
+            item['itemID'] = documento['_id']
+            db.insert_one(item)
+            return JSONResponse({'message' : 'Ok!'}, status_code=201)
+        
+        
         db.insert_one(item)
-        return JSONResponse({'message' : 'Ok!'}, status_code=201)
-     
+
+        return JSONResponse({'message' : 'We dont have this name Id'},status_code=202)
         ''' 
            if db:
                 try:
