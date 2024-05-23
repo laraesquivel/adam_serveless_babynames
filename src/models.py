@@ -34,17 +34,17 @@ class NameData(BaseModel):
 
 class SimilarNameDetails(BaseModel):
     _id: str = Field(..., alias="_id")
-    similiarNames: List[str]
+    similiarNames: Optional[List[str]]
     name: str
-    origin: str
-    meaning: str
+    origin: Optional[str]
+    meaning: Optional[str]
 
 class NameDetails(BaseModel):
     _id: str = Field(..., alias="_id")
     similiarNames: List[str]
     name: str
-    origin: str
-    meaning: str
+    origin: Optional[str]
+    meaning: Optional[str]
     associedDetails: Optional[List[SimilarNameDetails]] = None
 
 

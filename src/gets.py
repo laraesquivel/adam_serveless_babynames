@@ -24,6 +24,8 @@ def root():
 def say_hello(name: str):
     return {"message": f"Hello {name}"}
 
+
+
 @router.get('/getNames')
 def get_test(request : Request, name: str=None):
     if not name:
