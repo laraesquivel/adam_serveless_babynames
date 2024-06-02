@@ -6,11 +6,10 @@ from fastapi import (
 from bson import json_util
 from fastapi.responses import JSONResponse
 from random import randint
-from . import (models)
+from . import (models, const_pipeline)
 import unicodedata
 from pydantic import parse_obj_as
 from typing import List, Optional
-
 
 router = APIRouter(tags=["gets"])
 
@@ -35,35 +34,11 @@ def get_test(request : Request, name: str=None):
     n = normalized_string.capitalize()
     babynames = request.app.database["names"]
 
-    pipeline = [
-    {"$match": {"name": n}},
-    {"$lookup": {
-        "from": "names",
-        "localField": "recommendedNames",
-        "foreignField": "name",
-        "as": "associedDetails"
-    }},
-    {"$project": {
-        "_id": 1,
-        "name": 1,
-        "origin" : 1,
-        "meaning" : 1,
-        "similiarNames" : 1,
-        "associedDetails":{
-            "origin": 1,
-            "meaning": 1,
-            "name" : 1,
-            "similiarNames" : 1,
-            "_id" : 1
-        }
-    }}
-]
+    pipeline = const_pipeline.pipeline(n)
     results = list(babynames.aggregate(pipeline))
-
     name_details = [models.NameDetails(**item) for item in results]
-    return JSONResponse(content=[name.dict(by_alias=True) for name in name_details])
-
-
+    response = name_details[0].__repr__()
+    return JSONResponse(response)
 
 @router.get("/getRecPhrase/{user_id}")
 def get_rec_phrase(request : Request, user_id : str = None):

@@ -1,13 +1,26 @@
 from pydantic import BaseModel, Field
 #from pydantic.functional_validators import BeforeValidator
 from typing import Optional, Annotated, List
-from bson import ObjectId
+from bson.objectid import ObjectId as MONGO_ID
 from geojson import Point, Feature
 import datetime
 import pytz
 import re
 
+class PydanticObjectId(MONGO_ID):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
 
+    @classmethod
+    def validate(cls,v):
+        if not MONGO_ID.is_valid(v):
+            raise ValueError("Invalid ObjectId")
+        return MONGO_ID(v)
+    
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        field_schema.update(type="string")
 
 class NameQuery(BaseModel):
     name : str
@@ -33,20 +46,54 @@ class NameData(BaseModel):
     meaning : str = ''
 
 class SimilarNameDetails(BaseModel):
-    _id: str = Field(..., alias="_id")
+    id: Optional[PydanticObjectId] = Field(alias='_id')
     similiarNames: Optional[List[str]]
     name: str
     origin: Optional[str]
     meaning: Optional[str]
 
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+            MONGO_ID: lambda x: str(x)
+        }
+
+    def __repr__(self) -> str:
+        response_dict = {
+            "id" : str(self.id),
+            "similiarNames" : self.similiarNames,
+            "name" : self. name,
+            "origin" : self.origin,
+            "meaning" : self.meaning,
+        }
+
+        return response_dict
+    
 class NameDetails(BaseModel):
-    _id: str = Field(..., alias="_id")
+    id: Optional[PydanticObjectId] = Field(alias='_id')
     similiarNames: List[str]
     name: str
     origin: Optional[str]
     meaning: Optional[str]
     associedDetails: Optional[List[SimilarNameDetails]] = None
+    
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+            MONGO_ID: lambda x: str(x)
+        }
 
+    def __repr__(self) -> str:
+        response_dict = {
+            "id" : str(self.id),
+            "similiarNames" : self.similiarNames,
+            "name" : self. name,
+            "origin" : self.origin,
+            "meaning" : self.meaning,
+            "associedDetails" : [item.__repr__() for item in self.associedDetails]
+        }
+
+        return response_dict
 
 class NameInfo(BaseModel):
     found: bool
@@ -59,6 +106,7 @@ class NamesRequest(BaseModel):
 
 class ActionRequest(BaseModel):
     item : str 
+    itemID : Optional[str]
     tokenId :Optional[str] 
     action : int 
     lat : Optional[float]
@@ -82,7 +130,7 @@ class ActionRequest(BaseModel):
                 "timestamp" : datetime.datetime.now(pytz.timezone("America/Bahia")).timestamp(),
                 "action" : self.action,
                 #"relationalItem" : self.relationalItem,
-                "relationalNameID" : ObjectId(self.relationalNameID)}
+                "relationalNameID" : MONGO_ID(self.relationalNameID)}
         
         elif self.relationalNameID:
             return {'item' : self.item, 'action' : self.action,
@@ -92,7 +140,7 @@ class ActionRequest(BaseModel):
                 "timestamp" : datetime.datetime.now(pytz.timezone("America/Bahia")).timestamp(),
                 "action" : self.action,
                # "relationalItem" : self.relationalItem,
-                "relationalNameID" : ObjectId(self.relationalNameID)}
+                "relationalNameID" : MONGO_ID(self.relationalNameID)}
 
     
         return {'item' : self.item, 'action' : self.action,
