@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 #from pydantic.functional_validators import BeforeValidator
 from typing import Optional, Annotated, List
 from bson.objectid import ObjectId as MONGO_ID
+from bson import Timestamp
 from geojson import Point, Feature
 import datetime
 import pytz
@@ -105,8 +106,8 @@ class NamesRequest(BaseModel):
     pass
 
 class ActionRequest(BaseModel):
-    item : str 
-    itemID : Optional[str]
+    name : str 
+    nameID : Optional[str]
     tokenId :Optional[str] 
     action : int 
     lat : Optional[float]
@@ -123,7 +124,7 @@ class ActionRequest(BaseModel):
         if self.lat and self.lon and self.relationalNameID:
             location = Point((self.lat,self.lon))
     
-            return {'item' : self.item, 'action' : self.action,
+            return {'name' : self.name, 'action' : self.action,
                 "tokenId" : self.tokenId,
                 "location" : location,
                 "page" : self.page,
@@ -133,7 +134,7 @@ class ActionRequest(BaseModel):
                 "relationalNameID" : MONGO_ID(self.relationalNameID)}
         
         elif self.relationalNameID:
-            return {'item' : self.item, 'action' : self.action,
+            return {'name' : self.name, 'action' : self.action,
                 "tokenId" : self.tokenId,
                # "location" : location,
                 "page" : self.page,
@@ -154,3 +155,23 @@ class ActionRequest(BaseModel):
 class ActionResult(BaseModel):
     message: str
     id: str
+
+
+class User(BaseModel):
+    userId : str
+
+class UserResponse(BaseModel):
+    userId : str
+    id : Optional[PydanticObjectId] = Field(alias= '_id')
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {
+            MONGO_ID: lambda x: str(x)
+        }
+
+    def __repr__(self) -> str:
+        return {
+            'userId' : self.userId,
+            'id' : self.id
+        }

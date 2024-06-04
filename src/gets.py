@@ -40,6 +40,7 @@ def get_test(request : Request, name: str=None):
     response = name_details[0].__repr__()
     return JSONResponse(response)
 
+
 @router.get("/getRecPhrase/{user_id}")
 def get_rec_phrase(request : Request, user_id : str = None):
     try:
