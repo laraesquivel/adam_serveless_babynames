@@ -108,48 +108,18 @@ class NamesRequest(BaseModel):
 class ActionRequest(BaseModel):
     name : str 
     nameID : Optional[str]
-    tokenId :Optional[str] 
+    userId :Optional[str] 
     action : int 
     lat : Optional[float]
     lon : Optional[float]
     page : int 
-    location : Optional[Point]
+    location : Optional[Point] = None
     timestamp : Optional[float]
     relationalItem : Optional[str]
     relationalNameID : Optional[str]
    # idName : str
-
-    def __repr__(self) -> str:
-        location = None
-        if self.lat and self.lon and self.relationalNameID:
-            location = Point((self.lat,self.lon))
     
-            return {'name' : self.name, 'action' : self.action,
-                "tokenId" : self.tokenId,
-                "location" : location,
-                "page" : self.page,
-                "timestamp" : datetime.datetime.now(pytz.timezone("America/Bahia")).timestamp(),
-                "action" : self.action,
-                #"relationalItem" : self.relationalItem,
-                "relationalNameID" : MONGO_ID(self.relationalNameID)}
-        
-        elif self.relationalNameID:
-            return {'name' : self.name, 'action' : self.action,
-                "tokenId" : self.tokenId,
-               # "location" : location,
-                "page" : self.page,
-                "timestamp" : datetime.datetime.now(pytz.timezone("America/Bahia")).timestamp(),
-                "action" : self.action,
-               # "relationalItem" : self.relationalItem,
-                "relationalNameID" : MONGO_ID(self.relationalNameID)}
-
-    
-        return {'item' : self.item, 'action' : self.action,
-            "tokenId" : self.tokenId,
-            "page" : self.page,
-            "timestamp" : datetime.datetime.now(pytz.timezone("America/Bahia")).timestamp(),
-            "action" : self.action}
-
+       
 
 
 class ActionResult(BaseModel):
