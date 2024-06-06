@@ -115,7 +115,7 @@ class ActionRequest(BaseModel):
     page : int 
     location : Optional[Point] = None
     timestamp : Optional[float]
-    relationalItem : Optional[str]
+    relationalName : Optional[str]
     relationalNameID : Optional[str]
    # idName : str
     
