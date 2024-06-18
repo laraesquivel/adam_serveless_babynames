@@ -52,6 +52,7 @@ class SimilarNameDetails(BaseModel):
     name: str
     origin: Optional[str]
     meaning: Optional[str]
+    recommendedNames : Optional[str]
 
     class Config:
         arbitrary_types_allowed = True
