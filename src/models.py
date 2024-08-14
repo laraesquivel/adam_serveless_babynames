@@ -134,6 +134,9 @@ class User(BaseModel):
 class UserResponse(BaseModel):
     userId : str
     id : Optional[PydanticObjectId] = Field(alias= '_id')
+    assignature : Optional[str]
+    preferences : Optional[dict]
+    phrases : Optional[list]
 
     class Config:
         arbitrary_types_allowed = True
@@ -144,5 +147,8 @@ class UserResponse(BaseModel):
     def __repr__(self) -> str:
         return {
             'userId' : self.userId,
-            'id' : self.id
+            'id' : self.id,
+            'assignature' : self.assignature if self.assignature else '',
+            'preferences' : self.preferences if self.preferences else {},
+            'phrases' : self.phrases if self.phrases else []
         }
