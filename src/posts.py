@@ -6,7 +6,7 @@ from fastapi import (
 from bson import Timestamp, json_util
 from fastapi.responses import JSONResponse
 from datetime import datetime
-from .models import ActionRequest, User, UserResponse, NameDetails
+from .models import ActionRequest, User, UserResponse
 from .const_pipeline import pipeline
 from pymongo.collection import Collection
 import pytz
@@ -68,25 +68,3 @@ def post_new_user(request: Request, user :User ) -> JSONResponse:
         print(e)
 
 
-@router.post('/postNamesAction') #Muito custosa, n vale a pena 1,5s a 3s
-def post_names_action(request : Request, actions : ActionRequest):
-    
-    try:
-        action = request.app.database['actions']
-        names = request.app.database['names']
-
-
-        pprint.pprint("1")
-        request_action = actions.dict()
-        action.insert_one(request_action)
-
-        name = request_action['name']
-
-        pipe = pipeline(name)
-        result = list(names.aggregate(pipe))
-        name_details = [NameDetails(**item) for item in result]
-        response = name_details[0].__repr__()
-        return JSONResponse(response)
-
-    except Exception as e:
-        print(e)

@@ -120,8 +120,6 @@ class ActionRequest(BaseModel):
     relationalNameID : Optional[str]
    # idName : str
     
-       
-
 
 class ActionResult(BaseModel):
     message: str

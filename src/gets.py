@@ -2,6 +2,7 @@ from fastapi import (
     APIRouter,
     HTTPException,
     Request,
+    Query
 )
 from bson import json_util
 from fastapi.responses import JSONResponse
@@ -9,6 +10,7 @@ from random import randint
 from . import (models, const_pipeline)
 import unicodedata
 from typing import List, Optional
+import json
 
 router = APIRouter(tags=["gets"])
 
@@ -55,3 +57,16 @@ def get_rec_phrase(request : Request, userId : str = None):
              status_code=400)
 
 
+@router.get('/phraseNames')
+def get_phrase_names(request : Request, names : List[str] = Query(...)):
+    try:
+        db_names = request.app.database['names']
+        response_array = []
+        for n in names: 
+            documento = db_names.aggregate(const_pipeline.pipeline(n))
+            response_array.append([models.NameDetails(**doc) for doc in documento][0].__repr__())
+        return JSONResponse(response_array)
+            
+        return response_array
+    except Exception as e:
+        return e
