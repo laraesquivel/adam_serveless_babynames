@@ -2,15 +2,15 @@ from fastapi import (
     APIRouter,
     HTTPException,
     Request,
+    Query
 )
 from bson import json_util
 from fastapi.responses import JSONResponse
 from random import randint
-from . import (models)
+from . import (models, const_pipeline)
 import unicodedata
-from pydantic import parse_obj_as
 from typing import List, Optional
-
+import json
 
 router = APIRouter(tags=["gets"])
 
@@ -59,41 +59,36 @@ def get_test(request : Request, name: str=None):
     }}
 ]
     results = list(babynames.aggregate(pipeline))
-
     name_details = [models.NameDetails(**item) for item in results]
-    return JSONResponse(content=[name.dict(by_alias=True) for name in name_details])
+    response = name_details[0].__repr__()
+    return JSONResponse(response)
 
 
-
-@router.get("/getRecPhrase/{user_id}")
-def get_rec_phrase(request : Request, user_id : str = None):
+@router.get("/getUser")
+def get_rec_phrase(request : Request, userId : str = None):
     try:
         users_collection = request.app.database['users']
-        phrases_collection = request.app.database['phrases']
-        parcial_response = users_collection.find_one({'tokenId':user_id})
-        if user_id and 'nextPhrases' in parcial_response:
-            arr_phrases = parcial_response['nextPhrases']
-            if arr_phrases:
-                random_index = randint(0,len(arr_phrases) - 1)
-                response = json_util.dumps({'phrase' : arr_phrases[random_index], 'message': 'Its all okay'})
-                return JSONResponse(response, status_code=200)
-        randon_phrase = json_util.dumps(phrases_collection.aggregate([{"$sample":{"size":1}}]).next())
-        return JSONResponse(randon_phrase,status_code=200,mimetype="application/json")
-
+        parcial_response = users_collection.find_one({'userId':userId})
+        if parcial_response:
+             user = models.UserResponse(**parcial_response)
+             return user
+        raise Exception
     except Exception as e:
             return JSONResponse(json_util.dumps({'message':e}),status_code=500)
     return JSONResponse(json_util.dumps({'menssage':  "This HTTP triggered function executed successfully. Pass a userId in the query string or in the request body for a personalized response."}),
              status_code=400)
 
 
-@router.get("getNamesToPhrase/{phrase}")
-def get_names_to_phrase(request : Request, phrase : str = None):
-    if phrase:
-        try:
-            phrases_collection = request.app.database['phrase']
-            response = phrases_collection.find_one({'phrase':phrase})
-            return JSONResponse(content=json_util.dumps(response), status_code=200, media_type="application/json")
+@router.get('/phraseNames')
+def get_phrase_names(request : Request, names : List[str] = Query(...)):
+    try:
+        db_names = request.app.database['names']
+        response_array = []
+        for n in names: 
+            documento = db_names.aggregate(const_pipeline.pipeline(n))
+            response_array.append([models.NameDetails(**doc) for doc in documento][0].__repr__())
+        return JSONResponse(response_array)
             
-        except Exception as e:
-            return JSONResponse(json_util.dumps({'message':'Some error ocurred!'}),status_code=500)
-    return JSONResponse(json_util.dumps({'message':'Bad Request, phrase is missing!'}),status_code=400)
+        return response_array
+    except Exception as e:
+        return e

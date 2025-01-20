@@ -3,16 +3,17 @@ from fastapi import (
     Request,
     HTTPException
 )
-
 from bson import Timestamp, json_util
 from fastapi.responses import JSONResponse
 from datetime import datetime
-from .models import ActionRequest, NamesRequest, NameInfo, NameData
+from .models import ActionRequest, User, UserResponse
+from .const_pipeline import pipeline
 from pymongo.collection import Collection
+import pytz
 from pymongo import errors, MongoClient
 import os
 from dotenv import load_dotenv
-
+import pprint
 
 load_dotenv()
 URI = os.getenv('URI')
@@ -24,61 +25,46 @@ collection_actions = database['actions']
 
 router = APIRouter(tags=["posts"])
 
-
-
-
 @router.post('/postAction')
 def post_actions(request : Request, actions : ActionRequest):
     try:
         db = request.app.database['actions']
         nameDB = request.app.database['names']
-        item = actions.__repr__()
-        documento = nameDB.find_one({'name': item['item']})
-
-        if documento:
-            item['itemID'] = documento['_id']
-            db.insert_one(item)
-            return JSONResponse({'message' : 'Ok!'}, status_code=201)
-        
-        
+        time = int(datetime.now(pytz.timezone("America/Bahia")).timestamp())
+        item = actions.dict()
+        pprint.pprint(1)
+        item['timestamp'] = Timestamp(time,0)
+        pprint.pprint(2)
         db.insert_one(item)
-
-        return JSONResponse({'message' : 'We dont have this name Id'},status_code=202)
-        ''' 
-           if db:
-                try:
-                    db.insert(item)
-                    return  JSONResponse({"message" : "Ok!"} , status_code=201)
-                except Exception as e:
-                    return JSONResponse({"message":"Não conseguimos inserir isso!"},status_code=500)
-            
-            #return JSONResponse({'ok':item},status_code=201)'''
-        
+        return JSONResponse({'message' : 'Ok!'}, status_code=201)
+                
     except Exception as e:
+        pprint.pprint(e)
         return JSONResponse({"message" : 'canoot get db'}, status_code=503)
     
     #return JSONResponse({"message" : "Invalid Req_Body"}, status_code=400)
   
 
-@router.post("postNewUser")
-def post_new_user(request: Request) -> JSONResponse:
-    user_id = None
-    date_hour = datetime.utcnow()
-    timestamp = Timestamp(int(date_hour.timestamp()), 0)
+@router.post("/user")
+def post_new_user(request: Request, user :User ) -> JSONResponse:
+
     try:
-        req_body = request.json()
-        user_id = req_body['userId']
+        user_token = user.userId
+        db_user = request.app.database['users']
+        documento = db_user.find_one({'userId' : user_token})
 
-    except (ValueError, KeyError):
-        return JSONResponse(json_util.dumps({"message":"Invalid Req_Body or missing 'userId'"}), status_code=400)
+        pprint.pprint(documento)
+        pprint.pprint(type(documento))
 
-    if user_id:
-        try:
-            users_collection = request.app.database['users']
-            result = users_collection.insert_one({'tokenId': user_id, 'timestamp': timestamp})
-            return JSONResponse(json_util.dumps({'message': 'Add new user', 'userId': str(result.inserted_id)}),
-                                     status_code=201, mimetype="application/json")
-        except Exception as e:
-            return JSONResponse(json_util.dumps({'error': str(e)}), status_code=500, mimetype="application/json")
-    
-    return JSONResponse(json_util.dumps({'message': 'Bad Request, userId is missing!'}), status_code=400, mimetype="application/json")
+        if not documento:
+            user = db_user.insert_one({'userId' : user_token})
+            print(user)
+            return JSONResponse(json_util.dumps({'message' : 'New User Created'}), status_code=201)
+        
+        doc = UserResponse(**documento)
+        return doc
+        
+    except Exception as e:
+        print(e)
+
+

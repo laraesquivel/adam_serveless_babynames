@@ -12,6 +12,8 @@ docker build -t adam_serveless_babynames .
 # Run the Docker container
 docker run -p 8000:8000 adam_serveless_babynames
 
+#Put sudo in the begining for permission error in Linux
+
 ```
 
 ### With uvicorn
