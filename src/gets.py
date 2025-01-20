@@ -33,12 +33,12 @@ def get_test(request : Request, name: str=None):
     normalized_string = ''.join(c for c in unicodedata.normalize('NFD', name) if unicodedata.category(c) != 'Mn')
 
     n = normalized_string.capitalize()
-    babynames = request.app.database["names"]
+    babynames = request.app.database["newNames"]
 
     pipeline = [
     {"$match": {"name": n}},
     {"$lookup": {
-        "from": "names",
+        "from": "newNames",
         "localField": "recommendedNames",
         "foreignField": "name",
         "as": "associedDetails"
