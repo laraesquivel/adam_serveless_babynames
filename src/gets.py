@@ -33,7 +33,7 @@ def get_test(request : Request, name: str=None):
     normalized_string = ''.join(c for c in unicodedata.normalize('NFD', name) if unicodedata.category(c) != 'Mn')
 
     n = normalized_string.capitalize()
-    babynames = request.app.database["names"]
+    babynames = request.app.database["newNames"]
 
     pipeline = const_pipeline.pipeline(n)
     results = list(babynames.aggregate(pipeline))
