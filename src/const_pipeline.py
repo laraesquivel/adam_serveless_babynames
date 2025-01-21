@@ -14,7 +14,6 @@ def pipeline(n):
         "name": 1,
         "origin": 1,
         "meaning": 1,
-        "similiarNames": 1,
         "associedDetails": 1
     }},
     {"$addFields": {
@@ -28,7 +27,6 @@ def pipeline(n):
                     "name": "$$detail.name",
                     "origin": "$$detail.origin",
                     "meaning": "$$detail.meaning",
-                    "similiarNames": "$$detail.similiarNames"
                 }
             }
         }
@@ -51,7 +49,6 @@ def phrases_pipeline(n):
             "name": 1,
             "origin": 1,
             "meaning": 1,
-            "similiarNames": 1,
             "associedDetails": 1
         }},
         {"$addFields": {
@@ -65,7 +62,6 @@ def phrases_pipeline(n):
                         "name": "$$detail.name",
                         "origin": "$$detail.origin",
                         "meaning": "$$detail.meaning",
-                        "similiarNames": "$$detail.similiarNames"
                     }
                 }
             }
