@@ -60,7 +60,7 @@ def get_rec_phrase(request : Request, userId : str = None):
 @router.get('/phraseNames')
 def get_phrase_names(request : Request, names : List[str] = Query(...)):
     try:
-        db_names = request.app.database['names']
+        db_names = request.app.database['newNames']
         response_array = []
         for n in names: 
             documento = db_names.aggregate(const_pipeline.pipeline(n))
