@@ -29,7 +29,7 @@ router = APIRouter(tags=["posts"])
 def post_actions(request : Request, actions : ActionRequest):
     try:
         db = request.app.database['actions']
-        nameDB = request.app.database['names']
+        nameDB = request.app.database['newNames']
         time = int(datetime.now(pytz.timezone("America/Bahia")).timestamp())
         item = actions.dict()
         pprint.pprint(1)
