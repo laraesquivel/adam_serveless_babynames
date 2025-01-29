@@ -3,7 +3,7 @@ def pipeline(n):
     pipeline = [
     {"$match": {"name": n}},
     {"$lookup": {
-        "from": "newNames",
+        "from": "names",
         "localField": "recommendedNames",
         "foreignField": "name",
         "as": "associedDetails"
@@ -38,7 +38,7 @@ def phrases_pipeline(n):
     pipeline = [
         {"$in": {"name": n}},
         {"$lookup": {
-            "from": "newNames",
+            "from": "names",
             "localField": "recommendedNames",
             "foreignField": "name",
             "as": "associedDetails"
