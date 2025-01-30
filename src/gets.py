@@ -11,9 +11,11 @@ from . import (models, const_pipeline)
 import unicodedata
 from typing import List, Optional
 import json
+import logging
 
 router = APIRouter(tags=["gets"])
 
+logging.basicConfig(level=logging.DEBUG)
 
 @router.get("/")
 def root():
@@ -28,18 +30,25 @@ def say_hello(name: str):
 
 @router.get('/getNames')
 def get_test(request : Request, name: str=None):
-    if not name:
-        raise HTTPException(status_code=400, detail="Por favor, forneça um nome para pesquisar na lista de nomes.")
-    normalized_string = ''.join(c for c in unicodedata.normalize('NFD', name) if unicodedata.category(c) != 'Mn')
+    try:
+        logging.info(f"Recebendo requisição para: {name}")
 
-    n = normalized_string.capitalize()
-    babynames = request.app.database["newNames"]
+        if not name:
+            raise HTTPException(status_code=400, detail="Por favor, forneça um nome para pesquisar na lista de nomes.")
+        normalized_string = ''.join(c for c in unicodedata.normalize('NFD', name) if unicodedata.category(c) != 'Mn')
 
-    pipeline = const_pipeline.pipeline(n)
-    results = list(babynames.aggregate(pipeline))
-    name_details = [models.NameDetails(**item) for item in results]
-    response = name_details[0].__repr__()
-    return JSONResponse(response)
+        n = normalized_string.capitalize()
+        babynames = request.app.database["newNames"]
+
+        pipeline = const_pipeline.pipeline(n)
+        results = list(babynames.aggregate(pipeline))
+        name_details = [models.NameDetails(**item) for item in results]
+        response = name_details[0].__repr__()
+        return JSONResponse(response)
+    
+    except Exception as e:
+        logging.exception("Erro no /getNames")  # Mostra traceback completo
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/getUser")
