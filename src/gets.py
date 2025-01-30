@@ -29,12 +29,13 @@ def say_hello(name: str):
 
 
 @router.get('/getNames')
-def get_test(request : Request, name: str=None):
+def get_test(request: Request, name: str = None):
     try:
         logging.info(f"Recebendo requisição para: {name}")
 
         if not name:
-            raise HTTPException(status_code=400, detail="Por favor, forneça um nome para pesquisar na lista de nomes.")
+            raise HTTPException(status_code=400, detail="Por favor, forneça um nome para pesquisar.")
+
         normalized_string = ''.join(c for c in unicodedata.normalize('NFD', name) if unicodedata.category(c) != 'Mn')
 
         n = normalized_string.capitalize()
@@ -42,13 +43,23 @@ def get_test(request : Request, name: str=None):
 
         pipeline = const_pipeline.pipeline(n)
         results = list(babynames.aggregate(pipeline))
+
+        if not results:
+            raise HTTPException(status_code=404, detail="Nome não encontrado.")
+
         name_details = [models.NameDetails(**item) for item in results]
-        response = name_details[0].__repr__()
-        return JSONResponse(response)
-    
+        
+        return JSONResponse(content=name_details[0].model_dump())
+
+    except HTTPException as e:
+        raise e  # Deixa FastAPI lidar com erros HTTP normalmente
+
     except Exception as e:
-        logging.exception("Erro no /getNames")  # Mostra traceback completo
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.exception("Erro no /getNames")  
+        return JSONResponse(
+            content={"error": "Erro interno no servidor", "detail": str(e)},
+            status_code=500
+        )
 
 
 @router.get("/getUser")
