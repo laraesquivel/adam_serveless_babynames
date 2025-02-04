@@ -37,8 +37,13 @@ def get_test(request : Request, name: str=None):
     n = normalized_string.capitalize()
     babynames = request.app.database["newNames"]
 
+    print(f"Recebendo requisição para: {name}")
+
     pipeline = const_pipeline.pipeline(n)
     results = list(babynames.aggregate(pipeline))
+
+    print(f"Resultados do banco: {results}")
+
     name_details = [models.NameDetails(**item) for item in results]
     response = name_details[0].__repr__()
     return JSONResponse(response)
