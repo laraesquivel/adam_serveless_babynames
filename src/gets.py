@@ -45,9 +45,10 @@ def get_test(request : Request, name: str=None):
 
         print(f"Resultados do banco: {results}")
 
-        name_details = [models.NameDetails(**item) for item in results]
+        name_details = [models.NameDetails(**item) for item in results] #erro aqui?
         response = name_details[0].__repr__()
         return JSONResponse(response)
+    
     except Exception as e:
         print(f"Erro no banco: {e}")
         return JSONResponse(json_util.dumps({'message':e}),status_code=500)

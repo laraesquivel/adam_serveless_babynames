@@ -73,7 +73,7 @@ class SimilarNameDetails(BaseModel):
     
 class NameDetails(BaseModel):
     id: Optional[PydanticObjectId] = Field(alias='_id')
-    similiarNames: List[str]
+    similiarNames: Optional[List[str]] = None
     name: str
     origin: Optional[str]
     meaning: Optional[str]
