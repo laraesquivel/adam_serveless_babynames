@@ -12,6 +12,7 @@ import unicodedata
 from typing import List, Optional
 import json
 import logging
+from collections import defaultdict
 
 router = APIRouter(tags=["gets"])
 
@@ -82,3 +83,43 @@ def get_phrase_names(request : Request, names : List[str] = Query(...)):
         return response_array
     except Exception as e:
         return e
+    
+@app.get("/recommendations/")
+async def generate_recommendations(request: Request, user_id: str = Query(...)):
+    """
+    Gera recomendações temporárias para um usuário com base na interação de outros usuários.
+    """
+
+    actions_db = request.app.database["actions"]
+
+    # 1️⃣ Buscar os nomes que o usuário interagiu
+    user_actions = list(actions_db.find({"userId": user_id}, {"_id": 0, "name": 1}))
+    user_names = {action["name"] for action in user_actions}
+
+    if not user_names:
+        return {"message": "Nenhuma interação encontrada para esse usuário."}
+
+    # 2️⃣ Buscar usuários que interagiram com os mesmos nomes
+    similar_users = set()
+    for name in user_names:
+        other_users = actions_db.find({"name": name}, {"_id": 0, "userId": 1})
+        similar_users.update(user["userId"] for user in other_users if user["userId"] != user_id)
+
+    # 3️⃣ Coletar interações desses usuários e atribuir pesos
+    recommendations = defaultdict(int)
+    for similar_user in similar_users:
+        actions = actions_db.find({"userId": similar_user, "relationalName": {"$exists": True}})
+        for action in actions:
+            n_action = action["name"]
+            nr_action = action["relationalName"]
+
+            if n_action not in user_names:  # Evita recomendar nomes que o usuário já interagiu
+                recommendations[n_action] += 1
+            if nr_action not in user_names:
+                recommendations[nr_action] += 1
+
+    # 4️⃣ Ordenar recomendações pelo peso e retornar os 10 melhores
+    sorted_recommendations = sorted(recommendations.items(), key=lambda item: item[1], reverse=True)[:10]
+    recommended_names = [name for name, _ in sorted_recommendations]
+
+    return {"user_id": user_id, "recommended_names": recommended_names}
