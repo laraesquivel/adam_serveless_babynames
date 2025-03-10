@@ -85,7 +85,7 @@ def get_phrase_names(request : Request, names : List[str] = Query(...)):
         return e
     
 @app.get("/recommendations/")
-async def generate_recommendations(request: Request, user_id: str = Query(...)):
+async def generate_recommendations(request: Request, userId: str = Query(...)):
     """
     Gera recomendações temporárias para um usuário com base na interação de outros usuários.
     """
@@ -93,7 +93,7 @@ async def generate_recommendations(request: Request, user_id: str = Query(...)):
     actions_db = request.app.database["actions"]
 
     # 1️⃣ Buscar os nomes que o usuário interagiu
-    user_actions = list(actions_db.find({"userId": user_id}, {"_id": 0, "name": 1}))
+    user_actions = list(actions_db.find({"userId": userId}, {"_id": 0, "name": 1}))
     user_names = {action["name"] for action in user_actions}
 
     if not user_names:
@@ -103,7 +103,7 @@ async def generate_recommendations(request: Request, user_id: str = Query(...)):
     similar_users = set()
     for name in user_names:
         other_users = actions_db.find({"name": name}, {"_id": 0, "userId": 1})
-        similar_users.update(user["userId"] for user in other_users if user["userId"] != user_id)
+        similar_users.update(user["userId"] for user in other_users if user["userId"] != userId)
 
     # 3️⃣ Coletar interações desses usuários e atribuir pesos
     recommendations = defaultdict(int)
@@ -122,4 +122,4 @@ async def generate_recommendations(request: Request, user_id: str = Query(...)):
     sorted_recommendations = sorted(recommendations.items(), key=lambda item: item[1], reverse=True)[:10]
     recommended_names = [name for name, _ in sorted_recommendations]
 
-    return {"user_id": user_id, "recommended_names": recommended_names}
+    return {"user_id": userId, "recommended_names": recommended_names}
