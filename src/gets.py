@@ -90,7 +90,7 @@ async def generate_recommendations(request: Request, userId: str = Query(...)):
     Gera recomendações temporárias para um usuário com base na interação de outros usuários.
     """
 
-    actions_db = request.app.database["actions"]
+    actions_db = request.app.database['actions']
 
     # 1️⃣ Buscar os nomes que o usuário interagiu
     user_actions = list(actions_db.find({"userId": userId}, {"_id": 0, "name": 1}))
