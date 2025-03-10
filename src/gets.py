@@ -85,7 +85,7 @@ def get_phrase_names(request : Request, names : List[str] = Query(...)):
         return e
     
 @app.get("/recommendations/")
-async def generate_recommendations(request: Request, userId: str = Query(...)):
+async def generate_recommendations(request : Request, userId: str = Query(...)):
     """
     Gera recomendações temporárias para um usuário com base na interação de outros usuários.
     """
