@@ -96,8 +96,8 @@ async def generate_recommendations(request : Request, userId: str = Query(...)):
     user_actions = list(actions_db.find({"userId": userId}, {"_id": 0, "name": 1}))
     user_names = {action["name"] for action in user_actions}
 
-    if not user_names:
-        return {"message": "Nenhuma interação encontrada para esse usuário."}
+    #if not user_names:
+        #return {"message": "Nenhuma interação encontrada para esse usuário."}
 
     # 2️⃣ Buscar usuários que interagiram com os mesmos nomes
     similar_users = set()
