@@ -126,7 +126,8 @@ async def generate_recommendations(request : Request):
                     names[nr_action] +=peso
 
         names_to_update[name] = names
-    return {"names_to_update": names_to_update}
+        print(names_to_update)
+    return {"message" : "Recomendações geradas com sucesso"}
     # """
     # Gera recomendações temporárias para um usuário com base na interação de outros usuários.
     # """
