@@ -44,8 +44,6 @@ def get_test(request : Request, name: str=None):
 
         pipeline = const_pipeline.pipeline(n)
         results = list(babynames.aggregate(pipeline))
-        
-        results = list(set(results))[:10]  # Remove duplicatas e limita a 10 nomes
 
         print(f"Resultados do banco: {results}")
 
