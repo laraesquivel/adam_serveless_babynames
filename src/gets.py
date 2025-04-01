@@ -95,37 +95,37 @@ def get_phrase_names(request : Request, names : List[str] = Query(...)):
     except Exception as e:
         return e
 
-@router.get('/getActualPhrase')
-def get_actual_phrase(request : Request, userId : str = None):
-    # Seleciona uma frase aleatória do banco de dados e envia para o usuário
-    try:
-        if not userId:
-            raise HTTPException(status_code=400, detail="Por favor, forneça um userId para pesquisar na lista de nomes.")
+# @router.get('/getActualPhrase')
+# def get_actual_phrase(request : Request, userId : str = None):
+#     # Seleciona uma frase aleatória do banco de dados e envia para o usuário
+#     try:
+#         if not userId:
+#             raise HTTPException(status_code=400, detail="Por favor, forneça um userId para pesquisar na lista de nomes.")
         
-        users_collection = request.app.database['users']
-        babynames = request.app.database["newNames"]
-        babynames_phrases = request.app.database["phrases"]
+#         users_collection = request.app.database['users']
+#         babynames = request.app.database["newNames"]
+#         babynames_phrases = request.app.database["phrases"]
         
-        # Verifica se o usuário já existe no banco de dados
-        user = users_collection.find_one({"userId": userId})
+#         # Verifica se o usuário já existe no banco de dados
+#         user = users_collection.find_one({"userId": userId})
         
-        if not user:
-            raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+#         if not user:
+#             raise HTTPException(status_code=404, detail="Usuário não encontrado.")
         
-        # Verifica se o usuário já possui uma frase associada
-        if "phrase" in user and user["phrase"]:
-            return JSONResponse(user["phrase"])
+#         # Verifica se o usuário já possui uma frase associada
+#         if "phrase" in user and user["phrase"]:
+#             return JSONResponse(user["phrase"])
         
-        # Seleciona uma frase aleatória do banco de dados
-        random_phrase = babynames_phrases.aggregate([{"$sample": {"size": 1}}])
-        phrase = list(random_phrase)[0]["phrase"]
+#         # Seleciona uma frase aleatória do banco de dados
+#         random_phrase = babynames_phrases.aggregate([{"$sample": {"size": 1}}])
+#         phrase = list(random_phrase)[0]["phrase"]
         
-        # Atualiza o usuário com a nova frase
-        users_collection.update_one({"userId": userId}, {"$set": {"phrase": phrase}})
+#         # Atualiza o usuário com a nova frase
+#         users_collection.update_one({"userId": userId}, {"$set": {"phrase": phrase}})
         
-        return JSONResponse(phrase)
-    except Exception as e:
-        return JSONResponse(json_util.dumps({'message':e}),status_code=500)
+#         return JSONResponse(phrase)
+#     except Exception as e:
+#         return JSONResponse(json_util.dumps({'message':e}),status_code=500)
     
     
 #-----------------------------------------------------------------------------------------------------------------------
