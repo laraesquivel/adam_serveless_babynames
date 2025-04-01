@@ -43,6 +43,8 @@ def get_test(request : Request, name: str=None):
         print(f"Recebendo requisição para: {name}")
 
         pipeline = const_pipeline.pipeline(n)
+        print("Resultados brutos do pipeline:", results)
+
         results = list(babynames.aggregate(pipeline))
         
         #results = list(set(results))[:10]  # Remove duplicatas e limita a 10 nomes
