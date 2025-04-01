@@ -44,14 +44,20 @@ def get_test(request : Request, name: str=None):
 
         pipeline = const_pipeline.pipeline(n)
         results = list(babynames.aggregate(pipeline))
-        print("Resultados brutos do pipeline:", results)
+        #print("Resultados brutos do pipeline:", results)
         
         if not results:
             raise HTTPException(status_code=404, detail="Nome não encontrado na lista de nomes.")
         
-        print(f"Resultados do banco: {results}")
+        # Remove duplicatas
+        unique_results = {item['name']: item for item in results}  # Dicionário para remover nomes duplicados
+        filtered_results = list(unique_results.values())[:10]  # Garante no máximo 10 nomes
 
-        name_details = [models.NameDetails(**item) for item in results]
+        print(f"Resultados filtrados: {filtered_results}")
+        
+        #print(f"Resultados do banco: {results}")
+
+        name_details = [models.NameDetails(**item) for item in filtered_results]
         response = name_details[0].__repr__()
         return JSONResponse(response)
     
