@@ -94,7 +94,42 @@ def get_phrase_names(request : Request, names : List[str] = Query(...)):
         return response_array
     except Exception as e:
         return e
+
+@router.get('/getActualPhrase')
+def get_actual_phrase(request : Request, userId : str = None):
+    # Seleciona uma frase aleatória do banco de dados e envia para o usuário
+    try:
+        if not userId:
+            raise HTTPException(status_code=400, detail="Por favor, forneça um userId para pesquisar na lista de nomes.")
+        
+        users_collection = request.app.database['users']
+        babynames = request.app.database["newNames"]
+        babynames_phrases = request.app.database["phrases"]
+        
+        # Verifica se o usuário já existe no banco de dados
+        user = users_collection.find_one({"userId": userId})
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+        
+        # Verifica se o usuário já possui uma frase associada
+        if "phrase" in user and user["phrase"]:
+            return JSONResponse(user["phrase"])
+        
+        # Seleciona uma frase aleatória do banco de dados
+        random_phrase = babynames_phrases.aggregate([{"$sample": {"size": 1}}])
+        phrase = list(random_phrase)[0]["phrase"]
+        
+        # Atualiza o usuário com a nova frase
+        users_collection.update_one({"userId": userId}, {"$set": {"phrase": phrase}})
+        
+        return JSONResponse(phrase)
+    except Exception as e:
+        return JSONResponse(json_util.dumps({'message':e}),status_code=500)
     
+    
+#-----------------------------------------------------------------------------------------------------------------------
+# FUNÇÃO TESTE PARA GERAR RECOMENDAÇÕES INDIVIDUAIS (NÃO SERÁ USADA NO MOMENTO)
 @router.get("/recommendations/")
 async def generate_recommendations(request : Request):
 
@@ -137,40 +172,3 @@ async def generate_recommendations(request : Request):
 
         names_to_update[name] = names
     return {"message" : "Recomendações geradas com sucesso"}
-    # """
-    # Gera recomendações temporárias para um usuário com base na interação de outros usuários.
-    # """
-
-    # actions_db = request.app.database['actions']
-
-    # #  Buscar os nomes que o usuário interagiu
-    # user_actions = list(actions_db.find({"userId": userId}, {"_id": 0, "name": 1}))
-    # user_names = {action["name"] for action in user_actions}
-
-    # if not user_names:
-    #     return {"message": "Nenhuma interação encontrada para esse usuário."}
-
-    # # 2️⃣ Buscar usuários que interagiram com os mesmos nomes
-    # similar_users = set()
-    # for name in user_names:
-    #     other_users = actions_db.find({"name": name}, {"_id": 0, "userId": 1})
-    #     similar_users.update(user["userId"] for user in other_users if user["userId"] != userId)
-
-    # # 3️⃣ Coletar interações desses usuários e atribuir pesos
-    # recommendations = defaultdict(int)
-    # for similar_user in similar_users:
-    #     actions = actions_db.find({"userId": similar_user, "relationalName": {"$exists": True}})
-    #     for action in actions:
-    #         n_action = action["name"]
-    #         nr_action = action["relationalName"]
-
-    #         if n_action not in user_names:  # Evita recomendar nomes que o usuário já interagiu
-    #             recommendations[n_action] += 1
-    #         if nr_action not in user_names:
-    #             recommendations[nr_action] += 1
-
-    # # 4️⃣ Ordenar recomendações pelo peso e retornar os 10 melhores
-    # sorted_recommendations = sorted(recommendations.items(), key=lambda item: item[1], reverse=True)[:10]
-    # recommended_names = [name for name, _ in sorted_recommendations]
-
-    # return {"user_id": userId, "recommended_names": recommended_names}
