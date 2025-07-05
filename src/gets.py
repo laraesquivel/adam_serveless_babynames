@@ -15,6 +15,10 @@ import logging
 from collections import defaultdict
 from itertools import groupby
 
+ALL_ORIGIN = ["Alemã", "Árabe", "Espanhola", "Francesa", "Grega", "Hebraica", "Indígena", "Inglesa", "Japonesa", "Lusitana"]
+ALL_BRAZIL_REGION = ['Região Norte', 'Região Nordeste', 'Região Centro-Oeste', 'Região Sudeste', 'Região Sul']
+GENDER = ['M', 'F']
+
 router = APIRouter(tags=["gets"])
 
 logging.basicConfig(level=logging.DEBUG)
@@ -95,38 +99,124 @@ def get_phrase_names(request : Request, names : List[str] = Query(...)):
     except Exception as e:
         return e
 
-@router.get('/getActualPhrase')
-def get_actual_phrase(request : Request, userId : str = None):
-    # Seleciona uma frase aleatória do banco de dados e envia para o usuário
-    try:
-        if not userId:
-            raise HTTPException(status_code=400, detail="Por favor, forneça um userId para pesquisar na lista de nomes.")
+# @router.get('/getActualPhrase')
+# def get_actual_phrase(request : Request, userId : str = None):
+#     # Seleciona uma frase aleatória do banco de dados e envia para o usuário
+#     try:
+#         if not userId:
+#             raise HTTPException(status_code=400, detail="Por favor, forneça um userId para pesquisar na lista de nomes.")
         
-        users_collection = request.app.database['users'] 
-        babynames = request.app.database["newNames"]
-        babynames_phrases = request.app.database["phrases"]
+#         users_collection = request.app.database['users'] 
+#         babynames = request.app.database["newNames"]
+#         babynames_phrases = request.app.database["phrases"]
         
-        # Verifica se o usuário já existe no banco de dados
-        user = users_collection.find_one({"userId": userId})
+#         # Verifica se o usuário já existe no banco de dados
+#         user = users_collection.find_one({"userId": userId})
         
-        if not user:
-            raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+#         if not user:
+#             raise HTTPException(status_code=404, detail="Usuário não encontrado.")
         
-        # Verifica se o usuário já possui uma frase associada
-        if "phrase" in user and user["phrase"]:
-            return JSONResponse(user["phrase"])
+#         # Verifica se o usuário já possui uma frase associada
+#         if "phrase" in user and user["phrase"]:
+#             return JSONResponse(user["phrase"])
         
-        # Seleciona uma frase aleatória do banco de dados
-        random_phrase = babynames_phrases.aggregate([{"$sample": {"size": 1}}])
-        phrase = list(random_phrase)[0]["phrase"]
+#         # Seleciona uma frase aleatória do banco de dados
+#         random_phrase = babynames_phrases.aggregate([{"$sample": {"size": 1}}])
+#         phrase = list(random_phrase)[0]["phrase"]
         
-        # Atualiza o usuário com a nova frase
-        users_collection.update_one({"userId": userId}, {"$set": {"phrase": phrase}})
+#         # Atualiza o usuário com a nova frase
+#         users_collection.update_one({"userId": userId}, {"$set": {"phrase": phrase}})
         
-        return JSONResponse(phrase)
-    except Exception as e:
-        return JSONResponse(json_util.dumps({'message':e}),status_code=500)
+#         return JSONResponse(phrase)
+#     except Exception as e:
+#         return JSONResponse(json_util.dumps({'message':e}),status_code=500)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Funções para recomendação de frases em tempo real
+# Função auxiliar
+def binarize_preferences(G, R, O):
+    def __binarization(lst):
+        max_idx = 0
+        swap = False
+        new_list = [0] * len(lst)
+        for idx in range(len(lst)):
+            if lst[idx - 1] > lst[max_idx]:
+                max_idx = idx - 1
+                swap = True
+        if swap:
+            new_list[max_idx] = 1
+        return new_list
+
+    origin_list = __binarization([O.get(o, 0) for o in ALL_ORIGIN])
+    gender_list = __binarization([G.get(g, 0) for g in GENDER])
+    region_list = __binarization([R.get(r, 0) for r in ALL_BRAZIL_REGION])
+    binary_str = ''.join(map(str, gender_list + region_list + origin_list))
+    return binary_str
+
+# ⬇️ GET para atualizar a assinatura (assignature) do usuário
+@router.get("/update_user_assignature")
+def update_user_assignature(request: Request, userId: str):
+    db = request.app.database
+    users = db['users']
+    actions = db['actions']
+    names = db['newNames']
+    location = db['location']
+
+    user = users.find_one({'userId': userId})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    G, R, O = {}, {}, {}
+
+    this_user_actions = actions.find({'userId': userId})
+    for action in this_user_actions:
+        name_data = names.find_one({'name': action['name'], 'origin': {'$exists': True}})
+        if name_data:
+            g = name_data.get('gender')
+            o = name_data.get('origin')
+            if g:
+                G[g] = G.get(g, 0) + 1
+            if o:
+                O[o] = O.get(o, 0) + 1
+
+        loc = location.find_one({'_id': action['location']})
+        if loc:
+            region = loc.get('region')
+            if region:
+                R[region] = R.get(region, 0) + 1
+
+    assignature = binarize_preferences(G, R, O)
+    users.update_one({'userId': userId}, {
+        '$set': {
+            'preferences': {'gender': G, 'region': R, 'origin': O},
+            'assignature': assignature
+        }
+    })
+    return {'status': 'ok', 'assignature': assignature}
+
+
+# ⬇️ GET para atualizar a recomendação de frases do usuário
+@router.get("/update_user_phrases")
+def update_user_phrases(request: Request, userId: str):
+    db = request.app.database
+    users = db['users']
+    phrases = db['phrases']
+
+    user = users.find_one({'userId': userId})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
+    if 'assignature' not in user:
+        raise HTTPException(status_code=400, detail="Usuário não possui assinatura (assignature)")
+    
+    if 'phrases' in user:
+        return {'status': 'phrases já atribuídas'}
+
+    assignature = user['assignature']
+    matching_phrases = list(phrases.find({'assignature': assignature}))
+    
+    users.update_one({'userId': userId}, {'$set': {'phrases': matching_phrases}})
+    return {'status': 'phrases atualizadas', 'total': len(matching_phrases)}
     
 #-----------------------------------------------------------------------------------------------------------------------
 # FUNÇÃO TESTE PARA GERAR RECOMENDAÇÕES INDIVIDUAIS (NÃO SERÁ USADA NO MOMENTO)
