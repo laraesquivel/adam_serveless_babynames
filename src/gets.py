@@ -102,7 +102,7 @@ def get_actual_phrase(request : Request, userId : str = None):
         if not userId:
             raise HTTPException(status_code=400, detail="Por favor, forneça um userId para pesquisar na lista de nomes.")
         
-        users_collection = request.app.database['users']
+        users_collection = request.app.database['users'] 
         babynames = request.app.database["newNames"]
         babynames_phrases = request.app.database["phrases"]
         

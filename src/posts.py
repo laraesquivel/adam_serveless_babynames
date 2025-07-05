@@ -57,7 +57,12 @@ def post_new_user(request: Request, user :User ) -> JSONResponse:
         pprint.pprint(type(documento))
 
         if not documento:
-            user = db_user.insert_one({'userId' : user_token})
+            # If the user does not exist, create a new user with his atributes
+            user = {'userId': user_token,
+                    'phrases': [],
+                    'assignature': "0000000000000000",
+            }
+            db_user.insert_one(user)
             print(user)
             return JSONResponse(json_util.dumps({'message' : 'New User Created'}), status_code=201)
         
