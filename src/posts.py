@@ -70,7 +70,7 @@ def post_new_user(request: Request, user :User ) -> JSONResponse:
             db_user.insert_one(user)
 
             # Capta as frases que possuem a assinatura do usuário (0000000000000000)
-            phrases = db_phrases.find({'assignature': user['assignature']})
+            phrases = db_phrases.find({'assignature':  "0000000000000000"})
             for phrase in phrases:
                 # Adiciona as frases no usuário
                 db_user.update_one(
