@@ -134,89 +134,89 @@ def get_phrase_names(request : Request, names : List[str] = Query(...)):
 #-----------------------------------------------------------------------------------------------------------------------
 # Funções para recomendação de frases em tempo real
 # Função auxiliar
-def binarize_preferences(G, R, O):
-    def __binarization(lst):
-        max_idx = 0
-        swap = False
-        new_list = [0] * len(lst)
-        for idx in range(len(lst)):
-            if lst[idx - 1] > lst[max_idx]:
-                max_idx = idx - 1
-                swap = True
-        if swap:
-            new_list[max_idx] = 1
-        return new_list
+# def binarize_preferences(G, R, O):
+#     def __binarization(lst):
+#         max_idx = 0
+#         swap = False
+#         new_list = [0] * len(lst)
+#         for idx in range(len(lst)):
+#             if lst[idx - 1] > lst[max_idx]:
+#                 max_idx = idx - 1
+#                 swap = True
+#         if swap:
+#             new_list[max_idx] = 1
+#         return new_list
 
-    origin_list = __binarization([O.get(o, 0) for o in ALL_ORIGIN])
-    gender_list = __binarization([G.get(g, 0) for g in GENDER])
-    region_list = __binarization([R.get(r, 0) for r in ALL_BRAZIL_REGION])
-    binary_str = ''.join(map(str, gender_list + region_list + origin_list))
-    return binary_str
+#     origin_list = __binarization([O.get(o, 0) for o in ALL_ORIGIN])
+#     gender_list = __binarization([G.get(g, 0) for g in GENDER])
+#     region_list = __binarization([R.get(r, 0) for r in ALL_BRAZIL_REGION])
+#     binary_str = ''.join(map(str, gender_list + region_list + origin_list))
+#     return binary_str
 
-# ⬇️ GET para atualizar a assinatura (assignature) do usuário
-@router.get("/update_user_assignature")
-def update_user_assignature(request: Request, userId: str):
-    db = request.app.database
-    users = db['users']
-    actions = db['actions']
-    names = db['newNames']
-    location = db['location']
+# # ⬇️ GET para atualizar a assinatura (assignature) do usuário
+# @router.get("/update_user_assignature")
+# def update_user_assignature(request: Request, userId: str):
+#     db = request.app.database
+#     users = db['users']
+#     actions = db['actions']
+#     names = db['newNames']
+#     location = db['location']
 
-    user = users.find_one({'userId': userId})
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+#     user = users.find_one({'userId': userId})
+#     if not user:
+#         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
-    G, R, O = {}, {}, {}
+#     G, R, O = {}, {}, {}
 
-    this_user_actions = actions.find({'userId': userId})
-    for action in this_user_actions:
-        name_data = names.find_one({'name': action['name'], 'origin': {'$exists': True}})
-        if name_data:
-            g = name_data.get('gender')
-            o = name_data.get('origin')
-            if g:
-                G[g] = G.get(g, 0) + 1
-            if o:
-                O[o] = O.get(o, 0) + 1
+#     this_user_actions = actions.find({'userId': userId})
+#     for action in this_user_actions:
+#         name_data = names.find_one({'name': action['name'], 'origin': {'$exists': True}})
+#         if name_data:
+#             g = name_data.get('gender')
+#             o = name_data.get('origin')
+#             if g:
+#                 G[g] = G.get(g, 0) + 1
+#             if o:
+#                 O[o] = O.get(o, 0) + 1
 
-        loc = location.find_one({'_id': action['location']})
-        if loc:
-            region = loc.get('region')
-            if region:
-                R[region] = R.get(region, 0) + 1
+#         loc = location.find_one({'_id': action['location']})
+#         if loc:
+#             region = loc.get('region')
+#             if region:
+#                 R[region] = R.get(region, 0) + 1
 
-    assignature = binarize_preferences(G, R, O)
-    users.update_one({'userId': userId}, {
-        '$set': {
-            'preferences': {'gender': G, 'region': R, 'origin': O},
-            'assignature': assignature
-        }
-    })
-    return {'status': 'ok', 'assignature': assignature}
+#     assignature = binarize_preferences(G, R, O)
+#     users.update_one({'userId': userId}, {
+#         '$set': {
+#             'preferences': {'gender': G, 'region': R, 'origin': O},
+#             'assignature': assignature
+#         }
+#     })
+#     return {'status': 'ok', 'assignature': assignature}
 
 
-# ⬇️ GET para atualizar a recomendação de frases do usuário
-@router.get("/update_user_phrases")
-def update_user_phrases(request: Request, userId: str):
-    db = request.app.database
-    users = db['users']
-    phrases = db['phrases']
+# # ⬇️ GET para atualizar a recomendação de frases do usuário
+# @router.get("/update_user_phrases")
+# def update_user_phrases(request: Request, userId: str):
+#     db = request.app.database
+#     users = db['users']
+#     phrases = db['phrases']
 
-    user = users.find_one({'userId': userId})
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+#     user = users.find_one({'userId': userId})
+#     if not user:
+#         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
-    if 'assignature' not in user:
-        raise HTTPException(status_code=400, detail="Usuário não possui assinatura (assignature)")
+#     if 'assignature' not in user:
+#         raise HTTPException(status_code=400, detail="Usuário não possui assinatura (assignature)")
     
-    if 'phrases' in user:
-        return {'status': 'phrases já atribuídas'}
+#     if 'phrases' in user:
+#         return {'status': 'phrases já atribuídas'}
 
-    assignature = user['assignature']
-    matching_phrases = list(phrases.find({'assignature': assignature}))
+#     assignature = user['assignature']
+#     matching_phrases = list(phrases.find({'assignature': assignature}))
     
-    users.update_one({'userId': userId}, {'$set': {'phrases': matching_phrases}})
-    return {'status': 'phrases atualizadas', 'total': len(matching_phrases)}
+#     users.update_one({'userId': userId}, {'$set': {'phrases': matching_phrases}})
+#     return {'status': 'phrases atualizadas', 'total': len(matching_phrases)}
     
 #-----------------------------------------------------------------------------------------------------------------------
 # FUNÇÃO TESTE PARA GERAR RECOMENDAÇÕES INDIVIDUAIS (NÃO SERÁ USADA NO MOMENTO)
