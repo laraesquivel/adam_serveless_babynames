@@ -62,9 +62,9 @@ def post_new_user(request: Request, user :User ) -> JSONResponse:
 
         if not documento:
 
-            # Capta as frases que possuem a assinatura do usuário (0000000000000000)
+            # Capta as frases que possuem a assinatura do usuário (00000000000000000)
             new_user_phrases = []
-            phrases = db_phrases.find({'assignature':  "0000000000000000"})
+            phrases = db_phrases.find({'assignature':  "00000000000000000"})
             for doc in phrases:
                 # Adiciona as frases no usuário
                 new_user_phrases.append(doc['Frase'])
@@ -72,7 +72,7 @@ def post_new_user(request: Request, user :User ) -> JSONResponse:
             # If the user does not exist, create a new user with his atributes
             user = {'userId': user_token,
                     'phrases': [],
-                    'assignature': "0000000000000000",
+                    'assignature': "00000000000000000",
                     'phrases': new_user_phrases,
             }
             db_user.insert_one(user)
