@@ -51,7 +51,11 @@ def post_new_user(request: Request, user :User ) -> JSONResponse:
     try:
         user_token = user.userId
         db_user = request.app.database['users']
+        db_phrases = request.app.database['phrases']
         documento = db_user.find_one({'userId' : user_token})
+
+        # user_aux = db_user.find_one({'userId' : "9szypgwp9hwx415ckypm5m"})
+        # new_user_phrases = user_aux['phrases']
 
         pprint.pprint(documento)
         pprint.pprint(type(documento))
@@ -61,8 +65,19 @@ def post_new_user(request: Request, user :User ) -> JSONResponse:
             user = {'userId': user_token,
                     'phrases': [],
                     'assignature': "0000000000000000",
+                    'phrases': [],
             }
             db_user.insert_one(user)
+
+            # Capta as frases que possuem a assinatura do usuário (0000000000000000)
+            phrases = db_phrases.find({'assignature': user['assignature']})
+            for phrase in phrases:
+                # Adiciona as frases no usuário
+                db_user.update_one(
+                    {'userId': user_token},
+                    {'$push': {'phrases': phrase['Frase']}}
+                )
+
             print(user)
             return JSONResponse(json_util.dumps({'message' : 'New User Created'}), status_code=201)
         
