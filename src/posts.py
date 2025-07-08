@@ -63,24 +63,19 @@ def post_new_user(request: Request, user :User ) -> JSONResponse:
         if not documento:
 
             # Capta as frases que possuem a assinatura do usuário (0000000000000000)
+            new_user_phrases = []
             phrases = db_phrases.find({'assignature':  "0000000000000000"})
-            pprint.pprint(phrases)
-            for phrase in phrases:
+            for doc in phrases:
                 # Adiciona as frases no usuário
-                db_user.update_one(
-                    {'userId': user_token},
-                    {'$push': {'phrases': phrase['Frase']}}
-                )
+                new_user_phrases.append(doc['Frase'])
 
             # If the user does not exist, create a new user with his atributes
             user = {'userId': user_token,
                     'phrases': [],
                     'assignature': "0000000000000000",
-                    'phrases': [],
+                    'phrases': new_user_phrases,
             }
             db_user.insert_one(user)
-
-            
 
             print(user)
             return JSONResponse(json_util.dumps({'message' : 'New User Created'}), status_code=201)
