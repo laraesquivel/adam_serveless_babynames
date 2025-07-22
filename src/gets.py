@@ -195,28 +195,28 @@ def update_user_assignature(request: Request, userId: str):
     return {'status': 'ok', 'assignature': assignature}
 
 
-# # ⬇️ GET para atualizar a recomendação de frases do usuário
-# @router.get("/update_user_phrases")
-# def update_user_phrases(request: Request, userId: str):
-#     db = request.app.database
-#     users = db['users']
-#     phrases = db['phrases']
+# ⬇️ GET para atualizar a recomendação de frases do usuário
+@router.get("/update_user_phrases")
+def update_user_phrases(request: Request, userId: str):
+    db = request.app.database
+    users = db['users']
+    phrases = db['phrases']
 
-#     user = users.find_one({'userId': userId})
-#     if not user:
-#         raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    user = users.find_one({'userId': userId})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
-#     if 'assignature' not in user:
-#         raise HTTPException(status_code=400, detail="Usuário não possui assinatura (assignature)")
+    if 'assignature' not in user:
+        raise HTTPException(status_code=400, detail="Usuário não possui assinatura (assignature)")
     
-#     if 'phrases' in user:
-#         return {'status': 'phrases já atribuídas'}
+    if 'phrases' in user:
+        return {'status': 'phrases já atribuídas'}
 
-#     assignature = user['assignature']
-#     matching_phrases = list(phrases.find({'assignature': assignature}))
+    assignature = user['assignature']
+    matching_phrases = list(phrases.find({'assignature': assignature}))
     
-#     users.update_one({'userId': userId}, {'$set': {'phrases': matching_phrases}})
-#     return {'status': 'phrases atualizadas', 'total': len(matching_phrases)}
+    users.update_one({'userId': userId}, {'$set': {'phrases': matching_phrases}})
+    return {'status': 'phrases atualizadas', 'total': len(matching_phrases)}
     
 #-----------------------------------------------------------------------------------------------------------------------
 # FUNÇÃO TESTE PARA GERAR RECOMENDAÇÕES INDIVIDUAIS (NÃO SERÁ USADA NO MOMENTO)
