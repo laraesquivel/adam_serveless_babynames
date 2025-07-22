@@ -213,7 +213,11 @@ def update_user_phrases(request: Request, userId: str):
         return {'status': 'phrases já atribuídas'}
 
     assignature = user['assignature']
-    matching_phrases = list(phrases.find({'assignature': assignature}))
+    # Seleciona 10 frases aleatórias que combinam com a assignature
+    matching_phrases = list(phrases.aggregate([
+        {'$match': {'assignature': assignature}},
+        {'$sample': {'size': 10}}
+    ]))
     
     users.update_one({'userId': userId}, {'$set': {'phrases': matching_phrases}})
     return {'status': 'phrases atualizadas', 'total': len(matching_phrases)}
