@@ -209,8 +209,8 @@ def update_user_phrases(request: Request, userId: str):
     if 'assignature' not in user:
         raise HTTPException(status_code=400, detail="Usuário não possui assinatura (assignature)")
     
-    if 'phrases' in user:
-        return {'status': 'phrases já atribuídas'}
+    # if 'phrases' in user:
+    #     return {'status': 'phrases já atribuídas'}
 
     assignature = user['assignature']
     # Seleciona 10 frases aleatórias que combinam com a assignature
