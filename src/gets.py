@@ -127,7 +127,6 @@ def get_actual_phrase(request : Request, userId : str = None):
             raise HTTPException(status_code=400, detail="Por favor, forneça um userId para pesquisar na lista de nomes.")
         
         users_collection = request.app.database['users'] 
-        babynames = request.app.database["newNames"]
         babynames_phrases = request.app.database["phrases"]
         
         # Verifica se o usuário já existe no banco de dados
@@ -137,17 +136,19 @@ def get_actual_phrase(request : Request, userId : str = None):
             raise HTTPException(status_code=404, detail="Usuário não encontrado.")
         
         # Verifica se o usuário já possui uma frase associada
-        if "phrase" in user and user["phrase"]:
-            return JSONResponse(user["phrase"])
+        if "phrases" in user and user["phrases"]:
+            return JSONResponse(user["phrases"])
         
-        # Seleciona uma frase aleatória do banco de dados
-        random_phrase = babynames_phrases.aggregate([{"$sample": {"size": 1}}])
-        phrase = list(random_phrase)[0]["phrase"]
+        phrases = user.get("phrases", [])
+
+        # # Seleciona uma frase aleatória do banco de dados
+        # random_phrase = babynames_phrases.aggregate([{"$sample": {"size": 1}}])
+        # phrase = list(random_phrase)[0]["phrase"]
         
-        # Atualiza o usuário com a nova frase
-        users_collection.update_one({"userId": userId}, {"$set": {"phrase": phrase}})
+        # # Atualiza o usuário com a nova frase
+        # users_collection.update_one({"userId": userId}, {"$set": {"phrase": phrase}})
         
-        return JSONResponse(phrase)
+        return JSONResponse(phrases)
     except Exception as e:
         return JSONResponse(json_util.dumps({'message':e}),status_code=500)
 
