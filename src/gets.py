@@ -39,6 +39,10 @@ def get_test(request : Request, name: str=None):
     try:
         if not name:
             raise HTTPException(status_code=400, detail="Por favor, forneça um nome para pesquisar na lista de nomes.")
+        if name == null or name == "":
+            raise HTTPException(status_code=400, detail="Por favor, forneça um nome válido para pesquisar na lista de nomes.")
+        
+        # Normaliza o nome para remover acentos e caracteres especiais
         normalized_string = ''.join(c for c in unicodedata.normalize('NFD', name) if unicodedata.category(c) != 'Mn')
 
         n = normalized_string.capitalize()
