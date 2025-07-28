@@ -138,17 +138,17 @@ def get_actual_phrase(request : Request, userId : str = None):
         # Verifica se o usuário já possui uma frase associada
         if "phrases" in user and user["phrases"]:
             return JSONResponse(user["phrases"])
+        else:
+            raise HTTPException(status_code=404, detail="Usuário não possui frases associadas.")
         
-        phrases = user.get("phrases", [])
-
         # # Seleciona uma frase aleatória do banco de dados
         # random_phrase = babynames_phrases.aggregate([{"$sample": {"size": 1}}])
         # phrase = list(random_phrase)[0]["phrase"]
-        
+
         # # Atualiza o usuário com a nova frase
         # users_collection.update_one({"userId": userId}, {"$set": {"phrase": phrase}})
-        
-        return JSONResponse(phrases)
+
+        # return JSONResponse(phrase)
     except Exception as e:
         return JSONResponse(json_util.dumps({'message':e}),status_code=500)
 
