@@ -68,6 +68,24 @@ def get_test(request : Request, name: str=None):
     except Exception as e:
         print(f"Erro no banco: {e}")
         return JSONResponse(json_util.dumps({'message':e}),status_code=500)
+    
+@router.post('/getNamesByList')
+def get_names_by_list(request: Request, names: list[str]):
+    try:
+        babynames = request.app.database["newNames"]
+        results = []
+        for name in names:
+            normalized_string = ''.join(c for c in unicodedata.normalize('NFD', name) if unicodedata.category(c) != 'Mn')
+            n = normalized_string.capitalize()
+            pipeline = const_pipeline.pipeline(n)
+            query_results = list(babynames.aggregate(pipeline))
+            if query_results:
+                unique_results = {item['name']: item for item in query_results}
+                results.append(list(unique_results.values())[0])  # Pega o primeiro resultado único
+        return results
+    except Exception as e:
+        print(f"Erro no banco: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/getUser")
